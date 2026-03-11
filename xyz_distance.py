@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Compute the structural distance between two extended XYZ configurations.
+Compute the structural distance between two configurations.
+
+Supported formats: extended XYZ and LAMMPS data (atom_style atomic).
+Format is auto-detected from the file extension (.xyz → XYZ; .data /
+.lammps / .lmp → LAMMPS) and can be overridden with --format-a / --format-b.
 
 The distance is the RMSD (root-mean-square displacement) between matching
 atoms.  Atoms are matched by their 'id' field when present, otherwise by
@@ -13,13 +17,16 @@ Outputs:
   - RMS per component (dx, dy, dz)
   - Energy difference (if both files carry an energy)
 
-For trajectory files, use --frame-a / --frame-b to select frames.
+For XYZ trajectory files, use --frame-a / --frame-b to select frames.
 
 Usage:
   ./xyz_distance.py A.xyz B.xyz
+  ./xyz_distance.py A.data B.data
+  ./xyz_distance.py A.xyz B.data
   ./xyz_distance.py traj.xyz B.xyz --frame-a 5
   ./xyz_distance.py A.xyz B.xyz --no-pbc
   ./xyz_distance.py A.xyz B.xyz --verbose       # print per-atom displacements
+  ./xyz_distance.py A.cfg B.cfg --format-a lammps --format-b lammps
 """
 
 import argparse
@@ -95,6 +102,153 @@ def parse_atoms(atom_lines, props):
     return atoms, order
 
 
+# ── LAMMPS parser ────────────────────────────────────────────────────────────
+
+def read_lammps(path):
+    """Parse a LAMMPS data file (atom_style atomic).
+
+    Returns (natoms, info, atoms, order) where:
+      info  : dict with 'lattice' (9 floats, row-major) and optionally 'energy'
+      atoms : dict  id -> (x, y, z)
+      order : list of ids in file order
+    """
+    with open(path) as f:
+        lines = f.readlines()
+
+    info = {}
+    natoms = None
+    xlo = xhi = ylo = yhi = zlo = zhi = 0.0
+    xy = xz = yz = 0.0
+    atoms = {}
+    order = []
+    section = None
+
+    # Energy may appear in the header comment (produced by xyz2lammps.py)
+    if lines:
+        m = re.search(
+            r'energy\s*=\s*(-?[0-9]+\.?[0-9]*(?:[eE][+-]?[0-9]+)?)',
+            lines[0]
+        )
+        if m:
+            info['energy'] = float(m.group(1))
+
+    for line in lines:
+        stripped = line.strip()
+        # Strip inline comments for keyword lines, but keep raw for atom data
+        no_comment = stripped.split('#')[0].strip()
+
+        if not stripped or stripped.startswith('#'):
+            continue
+
+        low = stripped.lower()
+
+        # Section headers (must be checked before numeric parsing)
+        if low.startswith('atoms'):
+            section = 'atoms'
+            continue
+        if low == 'masses':
+            section = 'masses'
+            continue
+        if low in ('velocities', 'bonds', 'angles', 'dihedrals', 'impropers',
+                   'pair coeffs', 'bond coeffs', 'angle coeffs'):
+            section = low
+            continue
+
+        # Skip non-Atoms sections
+        if section != 'atoms':
+            # Atom count
+            m = re.match(r'^(\d+)\s+atoms\s*$', no_comment)
+            if m:
+                natoms = int(m.group(1))
+                continue
+
+            # Box bounds
+            m = re.match(
+                r'^(-?[\d.eE+\-]+)\s+(-?[\d.eE+\-]+)\s+xlo\s+xhi', no_comment)
+            if m:
+                xlo, xhi = float(m.group(1)), float(m.group(2))
+                continue
+            m = re.match(
+                r'^(-?[\d.eE+\-]+)\s+(-?[\d.eE+\-]+)\s+ylo\s+yhi', no_comment)
+            if m:
+                ylo, yhi = float(m.group(1)), float(m.group(2))
+                continue
+            m = re.match(
+                r'^(-?[\d.eE+\-]+)\s+(-?[\d.eE+\-]+)\s+zlo\s+zhi', no_comment)
+            if m:
+                zlo, zhi = float(m.group(1)), float(m.group(2))
+                continue
+            m = re.match(
+                r'^(-?[\d.eE+\-]+)\s+(-?[\d.eE+\-]+)\s+(-?[\d.eE+\-]+)'
+                r'\s+xy\s+xz\s+yz', no_comment)
+            if m:
+                xy, xz, yz = float(m.group(1)), float(m.group(2)), float(m.group(3))
+                continue
+        else:
+            # Atom lines: atom_id  atom_type  x  y  z  [ix iy iz]
+            parts = stripped.split()
+            if len(parts) >= 5:
+                try:
+                    aid = int(parts[0])
+                    x, y, z = float(parts[2]), float(parts[3]), float(parts[4])
+                    atoms[aid] = (x, y, z)
+                    order.append(aid)
+                except ValueError:
+                    pass  # skip malformed lines
+
+    # Build 9-value lattice from LAMMPS triclinic box:
+    #   a = (lx,  0,  0)
+    #   b = (xy, ly,  0)
+    #   c = (xz, yz, lz)
+    lx, ly, lz = xhi - xlo, yhi - ylo, zhi - zlo
+    info['lattice'] = [lx, 0.0, 0.0,
+                       xy,  ly, 0.0,
+                       xz,  yz,  lz]
+
+    if natoms is None:
+        natoms = len(atoms)
+
+    return natoms, info, atoms, order
+
+
+# ── Format detection & unified loader ────────────────────────────────────────
+
+_LAMMPS_EXTS = {'.data', '.lammps', '.lmp'}
+_XYZ_EXTS    = {'.xyz'}
+
+
+def _detect_format(path, override):
+    if override:
+        return override
+    import os
+    ext = os.path.splitext(path)[1].lower()
+    if ext in _LAMMPS_EXTS:
+        return 'lammps'
+    return 'xyz'
+
+
+def load_frame(path, fmt, frame_idx):
+    """Load one frame from *path* and return (natoms, info, atoms, order).
+
+    atoms : dict  id -> (x, y, z)
+    order : list of ids in file order
+    """
+    if fmt == 'lammps':
+        if frame_idx != 0:
+            print("Warning: LAMMPS data files are single-frame; "
+                  "--frame option ignored.", file=sys.stderr)
+        return read_lammps(path)
+
+    # XYZ
+    lines = open(path).readlines()
+    natoms, info, atom_lines = read_frame(lines, frame_idx)
+    props = info.get('properties')
+    if not props:
+        sys.exit(f"Error: 'properties' key missing from XYZ header in {path}.")
+    atoms, order = parse_atoms(atom_lines, props)
+    return natoms, info, atoms, order
+
+
 # ── Geometry ─────────────────────────────────────────────────────────────────
 
 def lattice_to_cell(lattice):
@@ -151,16 +305,20 @@ def min_image(dx, dy, dz, a, b, c):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Compute RMSD between two extended XYZ configurations.",
+        description="Compute RMSD between two atomic configurations (XYZ or LAMMPS).",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument('file_a', help="First XYZ file")
-    parser.add_argument('file_b', help="Second XYZ file")
+    parser.add_argument('file_a', help="First file (XYZ or LAMMPS data)")
+    parser.add_argument('file_b', help="Second file (XYZ or LAMMPS data)")
     parser.add_argument('--frame-a', type=int, default=0,
-                        help="Frame index in file A (default: 0)")
+                        help="Frame index in file A, XYZ only (default: 0)")
     parser.add_argument('--frame-b', type=int, default=0,
-                        help="Frame index in file B (default: 0)")
+                        help="Frame index in file B, XYZ only (default: 0)")
+    parser.add_argument('--format-a', choices=['xyz', 'lammps'], default=None,
+                        help="Force format for file A (default: auto from extension)")
+    parser.add_argument('--format-b', choices=['xyz', 'lammps'], default=None,
+                        help="Force format for file B (default: auto from extension)")
     parser.add_argument('--no-pbc', action='store_true',
                         help="Disable periodic boundary conditions")
     parser.add_argument('--verbose', '-v', action='store_true',
@@ -169,26 +327,19 @@ def main():
                         help="Print the N atoms with largest displacement")
     args = parser.parse_args()
 
+    fmt_a = _detect_format(args.file_a, args.format_a)
+    fmt_b = _detect_format(args.file_b, args.format_b)
+
     # Read files
     try:
-        lines_a = open(args.file_a).readlines()
-        lines_b = open(args.file_b).readlines()
+        natoms_a, info_a, atoms_a, order_a = load_frame(
+            args.file_a, fmt_a, args.frame_a)
+        natoms_b, info_b, atoms_b, order_b = load_frame(
+            args.file_b, fmt_b, args.frame_b)
     except FileNotFoundError as e:
         sys.exit(f"Error: {e}")
-
-    try:
-        natoms_a, info_a, atom_lines_a = read_frame(lines_a, args.frame_a)
-        natoms_b, info_b, atom_lines_b = read_frame(lines_b, args.frame_b)
     except (IndexError, ValueError) as e:
         sys.exit(f"Error reading frame: {e}")
-
-    props_a = info_a.get('properties')
-    props_b = info_b.get('properties')
-    if not props_a or not props_b:
-        sys.exit("Error: 'properties' key missing from one of the XYZ headers.")
-
-    atoms_a, order_a = parse_atoms(atom_lines_a, props_a)
-    atoms_b, order_b = parse_atoms(atom_lines_b, props_b)
 
     # Match by id
     common_ids = sorted(set(atoms_a) & set(atoms_b))
@@ -217,6 +368,7 @@ def main():
         disp.append((d, dx, dy, dz, aid))
 
     # Statistics
+    total = math.sqrt(sum(d**2 for d, *_ in disp) )
     rmsd = math.sqrt(sum(d**2 for d, *_ in disp) / n)
     rms_x = math.sqrt(sum(dx**2 for _, dx, _, _, _ in disp) / n)
     rms_y = math.sqrt(sum(dy**2 for _, _, dy, _, _ in disp) / n)
@@ -226,8 +378,14 @@ def main():
 
     # ── Output ──
     import os
-    na = f"{os.path.basename(args.file_a)}[{args.frame_a}]"
-    nb = f"{os.path.basename(args.file_b)}[{args.frame_b}]"
+    def _label(path, fmt, frame):
+        base = os.path.basename(path)
+        if fmt == 'lammps':
+            return f"{base} [lammps]"
+        return f"{base}[{frame}]"
+
+    na = _label(args.file_a, fmt_a, args.frame_a)
+    nb = _label(args.file_b, fmt_b, args.frame_b)
     print(f"\nDistance: {na}  →  {nb}")
     print(f"  Atoms matched  : {n}")
     if use_pbc:
@@ -238,13 +396,14 @@ def main():
     else:
         print(f"  PBC            : off")
     print()
-    print(f"  RMSD           : {rmsd:.6f} Å")
-    print(f"  Mean |disp|    : {d_mean:.6f} Å")
-    print(f"  Max  |disp|    : {d_max:.6f} Å  (atom id {id_max},"
+    print(f"  Distance totale   : {total:.6f} Å")
+    print(f"  RMSD              : {rmsd:.6f} Å")
+    print(f"  Mean |disp|       : {d_mean:.6f} Å")
+    print(f"  Max  |disp|       : {d_max:.6f} Å  (atom id {id_max},"
           f"  Δ=({dx_max:.4f}, {dy_max:.4f}, {dz_max:.4f}))")
-    print(f"  RMS  Δx        : {rms_x:.6f} Å")
-    print(f"  RMS  Δy        : {rms_y:.6f} Å")
-    print(f"  RMS  Δz        : {rms_z:.6f} Å")
+    print(f"  RMS  Δx           : {rms_x:.6f} Å")
+    print(f"  RMS  Δy           : {rms_y:.6f} Å")
+    print(f"  RMS  Δz           : {rms_z:.6f} Å")
 
     if 'energy' in info_a and 'energy' in info_b:
         dE = info_b['energy'] - info_a['energy']

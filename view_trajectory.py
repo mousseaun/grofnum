@@ -6,7 +6,6 @@ import argparse
 import sys
 from pathlib import Path
 
-import sys
 from PySide6.QtWidgets import QApplication
 QApplication(sys.argv)
 

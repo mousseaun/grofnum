@@ -19,14 +19,15 @@ from ovito.modifiers import (
 from ovito.vis import Viewport
 from ovito.qt_compat import QtCore, QtWidgets
 
-TRAJ_FILE = Path(__file__).with_name("trajkmc.xyz")
+DEFAULT_TRAJ_FILE = Path(__file__).with_name("trajkmc.xyz")
 PLAYBACK_INTERVAL_MS = 150  # délai entre deux images en lecture automatique
 
 INFO_TEXT = """\
 view_trajectory.py — visualiseur de trajectoire KMC (OVITO)
 
-Ce script charge la trajectoire "trajkmc.xyz" (dans le même dossier que
-le script) et ouvre une fenêtre OVITO permettant de :
+Ce script charge un fichier de trajectoire (par défaut "trajkmc.xyz" dans
+le même dossier que le script, ou le fichier passé en argument) et ouvre
+une fenêtre OVITO permettant de :
 
   - visualiser les configurations atomiques successives dans un viewport 3D ;
   - lire la trajectoire automatiquement (bouton "Lecture"/"Pause") ;
@@ -38,8 +39,9 @@ le script) et ouvre une fenêtre OVITO permettant de :
     "Masquer atomes FCC") pour ne garder que les défauts visibles.
 
 Utilisation :
-  python view_trajectory.py            lance la fenêtre de visualisation
-  python view_trajectory.py --info     affiche ce message et quitte
+  python view_trajectory.py                    charge trajkmc.xyz par défaut
+  python view_trajectory.py chemin/vers/fichier.xyz   charge un autre fichier
+  python view_trajectory.py --info             affiche ce message et quitte
 """
 
 
@@ -130,6 +132,13 @@ def parse_args():
         add_help=True,
     )
     parser.add_argument(
+        "trajectory",
+        nargs="?",
+        type=Path,
+        default=DEFAULT_TRAJ_FILE,
+        help=f"fichier de trajectoire à charger (défaut : {DEFAULT_TRAJ_FILE.name})",
+    )
+    parser.add_argument(
         "--info",
         action="store_true",
         help="afficher une description des fonctionnalités du script et quitter",
@@ -143,12 +152,16 @@ def main():
         print(INFO_TEXT)
         return
 
+    traj_file = args.trajectory
+    if not traj_file.exists():
+        sys.exit(f"Erreur : fichier introuvable : {traj_file}")
+
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
 
-    pipeline = import_file(str(TRAJ_FILE))
+    pipeline = import_file(str(traj_file))
     pipeline.add_to_scene()
 
-    print(f"Trajectoire chargée : {TRAJ_FILE.name}")
+    print(f"Trajectoire chargée : {traj_file.name}")
     print(f"Nombre d'images : {pipeline.source.num_frames}")
     print(f"Nombre d'atomes : {pipeline.compute().particles.count}")
 

@@ -9,7 +9,8 @@ permalink: /
 # grofnum
 {: .no_toc }
 
-Scripts utilitaires pour le post-traitement de simulations de dynamique moléculaire (LAMMPS), d'événements ARTn, et de trajectoires KMC.
+Scripts utilitaires pour le post-traitement de simulations de dynamique moléculaire (LAMMPS), d'événements ARTn, et de trajectoires KMC, et diverses informations, entre autres, sur l'utilisation de conteneurs de type Podman.
+
 {: .fs-5 .fw-300 }
 
 ---

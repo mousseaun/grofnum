@@ -1,0 +1,25 @@
+title: grofnum
+description: Scripts utilitaires pour LAMMPS · ARTn · KMC
+remote_theme: just-the-docs/just-the-docs@v0.10.0
+
+url: https://mousseaun.github.io
+baseurl: /grofnum
+
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+  preview_words_before: 5
+  preview_words_after: 10
+
+aux_links:
+  "GitHub ↗":
+    - "https://github.com/mousseaun/grofnum"
+
+aux_links_new_tab: true
+
+footer_content: "Université de Montréal &mdash; <a href=\"https://github.com/mousseaun/grofnum\">mousseaun/grofnum</a>"
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag

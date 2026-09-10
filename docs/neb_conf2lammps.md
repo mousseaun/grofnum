@@ -1,7 +1,8 @@
 ---
 layout: default
 title: neb_conf2lammps.py
-nav_order: 3
+parent: Scripts
+nav_order: 2
 ---
 
 # neb_conf2lammps.py

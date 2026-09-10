@@ -1,7 +1,8 @@
 ---
 layout: default
 title: nettoyage.sh
-nav_order: 8
+parent: Scripts
+nav_order: 7
 ---
 
 # nettoyage.sh

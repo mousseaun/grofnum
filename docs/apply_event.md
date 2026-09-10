@@ -1,7 +1,8 @@
 ---
 layout: default
 title: apply_event.py
-nav_order: 2
+parent: Scripts
+nav_order: 1
 ---
 
 # apply_event.py

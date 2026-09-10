@@ -1,7 +1,8 @@
 ---
 layout: default
 title: show_basin_connectivity.py
-nav_order: 4
+parent: Scripts
+nav_order: 3
 ---
 
 # show_basin_connectivity.py

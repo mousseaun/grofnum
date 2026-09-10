@@ -1,7 +1,8 @@
 ---
 layout: default
 title: view_trajectory.py
-nav_order: 5
+parent: Scripts
+nav_order: 4
 ---
 
 # view_trajectory.py

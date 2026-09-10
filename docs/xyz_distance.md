@@ -1,7 +1,8 @@
 ---
 layout: default
 title: xyz_distance.py
-nav_order: 7
+parent: Scripts
+nav_order: 6
 ---
 
 # xyz_distance.py

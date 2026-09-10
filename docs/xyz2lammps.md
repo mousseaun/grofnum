@@ -1,7 +1,8 @@
 ---
 layout: default
 title: xyz2lammps.py
-nav_order: 6
+parent: Scripts
+nav_order: 5
 ---
 
 # xyz2lammps.py

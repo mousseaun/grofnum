@@ -17,6 +17,8 @@ Visualiseur 3-D interactif de trajectoires KMC via OVITO.
 
 Charge un fichier XYZ multi-frames et le rend dans un viewport OVITO avec une interface Qt. Permet la navigation frame par frame ou la lecture automatique. Inclut une analyse Common Neighbor Analysis (CNA) pour identifier les défauts structuraux, avec masquage optionnel des atomes en structure FCC pour isoler les environnements non-FCC.
 
+Il présente un exemple d'automatisation de la visualisation avec Ovito-python.
+
 **Dépendances :** `ovito`, `PySide6`
 
 ---

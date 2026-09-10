@@ -1,0 +1,1129 @@
+<title>grofnum</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* ─── TOKENS ─────────────────────────────────────────────── */
+:root {
+  --bg:          #f0f2f5;
+  --surface:     #ffffff;
+  --surface-alt: #e8ecf2;
+  --border:      #c8d0de;
+  --text:        #18212e;
+  --muted:       #56687a;
+  --accent:      #0066cc;
+  --accent-dim:  #e4edf8;
+  --accent-str:  #1e7a4a;
+  --accent-str-dim: #e3f2eb;
+  --code-bg:     #1b2231;
+  --code-text:   #cdd5e0;
+  --code-kw:     #61cfff;
+  --code-str:    #88d4a8;
+  --code-cmt:    #5a7080;
+  --code-pn:     #c3a7f0;
+  --radius:      6px;
+  --sw:          220px;    /* sidebar width */
+  --cmax:        720px;    /* content max */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:          #0e1318;
+    --surface:     #151d27;
+    --surface-alt: #1a2434;
+    --border:      #253040;
+    --text:        #d0dae8;
+    --muted:       #7a8fa8;
+    --accent:      #4da3ff;
+    --accent-dim:  #162030;
+    --accent-str:  #4db87a;
+    --accent-str-dim: #0e2018;
+    --code-bg:     #0a0f16;
+    --code-text:   #cdd5e0;
+    --code-kw:     #7fc8f8;
+    --code-str:    #85c98a;
+    --code-cmt:    #4a6070;
+    --code-pn:     #b39de0;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:          #0e1318;
+  --surface:     #151d27;
+  --surface-alt: #1a2434;
+  --border:      #253040;
+  --text:        #d0dae8;
+  --muted:       #7a8fa8;
+  --accent:      #4da3ff;
+  --accent-dim:  #162030;
+  --accent-str:  #4db87a;
+  --accent-str-dim: #0e2018;
+  --code-bg:     #0a0f16;
+  --code-text:   #cdd5e0;
+  --code-kw:     #7fc8f8;
+  --code-str:    #85c98a;
+  --code-cmt:    #4a6070;
+  --code-pn:     #b39de0;
+}
+
+/* ─── RESET ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+
+body {
+  font-family: 'Source Sans 3', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.65;
+  padding-inline: 20px;
+}
+
+/* ─── SITE HEADER ────────────────────────────────────────── */
+.site-header {
+  max-width: calc(var(--sw) + var(--cmax) + 64px);
+  margin-inline: auto;
+  padding-block: 20px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.site-logo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.logo-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.logo-name .repo-prefix {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.logo-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+
+.header-spacer { flex: 1; }
+
+.gh-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.gh-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.gh-link svg { flex-shrink: 0; }
+
+/* ─── PAGE BODY ──────────────────────────────────────────── */
+.page-body {
+  max-width: calc(var(--sw) + var(--cmax) + 64px);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: var(--sw) 1fr;
+  gap: 0 44px;
+  padding-block: 36px 80px;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────── */
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  padding-right: 20px;
+  border-right: 1px solid var(--border);
+}
+
+.sb-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  padding-left: 8px;
+}
+
+.sb-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sb-nav a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.775rem;
+  color: var(--muted);
+  transition: color 0.12s, background 0.12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-nav a:hover {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.sb-nav a .lang-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sb-nav a.py .lang-dot  { background: var(--accent); }
+.sb-nav a.sh .lang-dot  { background: var(--accent-str); }
+
+.sb-divider {
+  height: 1px;
+  background: var(--border);
+  margin-block: 10px;
+}
+
+/* ─── MAIN ───────────────────────────────────────────────── */
+main { min-width: 0; }
+
+/* ─── INTRO ──────────────────────────────────────────────── */
+.intro {
+  margin-bottom: 40px;
+}
+
+.intro p {
+  max-width: 60ch;
+  font-size: 0.975rem;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+.intro p:last-of-type { margin-bottom: 0; }
+
+.badge-row {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--surface-alt);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+/* ─── REQUIREMENTS ───────────────────────────────────────── */
+.requirements {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 44px;
+}
+
+.req-heading {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.req-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px 24px;
+}
+
+.req-item { display: flex; flex-direction: column; gap: 2px; }
+
+.req-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.req-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.req-note {
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+/* ─── SCRIPT SECTION ─────────────────────────────────────── */
+.script-section {
+  margin-bottom: 52px;
+  scroll-margin-top: 24px;
+}
+
+.script-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.script-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.lang-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.lang-tag.py {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.lang-tag.sh {
+  background: var(--accent-str-dim);
+  color: var(--accent-str);
+}
+
+.script-desc {
+  font-size: 0.925rem;
+  color: var(--muted);
+  margin-bottom: 14px;
+  max-width: 56ch;
+}
+
+.detail-p {
+  font-size: 0.95rem;
+  color: var(--text);
+  max-width: 64ch;
+  margin-bottom: 12px;
+}
+
+/* ─── CODE BLOCK ─────────────────────────────────────────── */
+.code-block {
+  background: var(--code-bg);
+  border-radius: var(--radius);
+  margin-block: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  overflow: hidden;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.cbh-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4a6070;
+}
+
+.cbh-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.cbh-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+}
+
+.code-block pre {
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  line-height: 1.8;
+  color: var(--code-text);
+  overflow-x: auto;
+  tab-size: 2;
+}
+
+/* syntax classes */
+.kw  { color: var(--code-kw);  }
+.st  { color: var(--code-str); }
+.cm  { color: var(--code-cmt); font-style: italic; }
+.pn  { color: var(--code-pn);  }
+.pl  { color: #e8a87c; }        /* placeholder */
+
+/* ─── ARGS TABLE ─────────────────────────────────────────── */
+.args-wrap {
+  overflow-x: auto;
+  margin-block: 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+table.args {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  background: var(--surface);
+}
+
+table.args th {
+  padding: 7px 14px;
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-family: 'Source Sans 3', sans-serif;
+  text-align: left;
+  white-space: nowrap;
+}
+
+table.args td {
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+}
+
+table.args code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.79rem;
+  color: var(--code-kw);
+  background: var(--accent-dim);
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.pill-req {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.pill-opt {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.td-desc { color: var(--muted); font-size: 0.875rem; }
+
+/* ─── OUTPUTS ────────────────────────────────────────────── */
+.outputs-row {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.output-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem;
+  padding: 2px 9px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--code-str);
+}
+
+/* ─── WARNING BLOCK ──────────────────────────────────────── */
+.warn-block {
+  display: flex;
+  gap: 10px;
+  background: color-mix(in srgb, #e05c1e 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, #e05c1e 30%, transparent);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  color: var(--text);
+  margin-block: 14px;
+}
+
+.warn-icon { flex-shrink: 0; color: #e05c1e; font-size: 1rem; }
+
+/* ─── SECTION RULE ───────────────────────────────────────── */
+.section-rule {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin-bottom: 52px;
+}
+
+/* ─── FOOTER ─────────────────────────────────────────────── */
+footer {
+  max-width: calc(var(--sw) + var(--cmax) + 64px);
+  margin-inline: auto;
+  border-top: 1px solid var(--border);
+  padding-block: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+footer a {
+  color: var(--muted);
+  text-decoration: none;
+}
+footer a:hover { color: var(--accent); }
+
+/* ─── RESPONSIVE ─────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .page-body {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .sidebar {
+    display: none;
+  }
+  .site-header {
+    gap: 12px;
+  }
+}
+
+/* ─── FOCUS ──────────────────────────────────────────────── */
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+</style>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header class="site-header">
+  <div class="site-logo">
+    <div class="logo-name">
+      <span class="repo-prefix">mousseaun / </span>grofnum
+    </div>
+    <div class="logo-sub">Scripts utilitaires pour LAMMPS · ARTn · KMC</div>
+  </div>
+  <div class="header-spacer"></div>
+  <a class="gh-link" href="https://github.com/mousseaun/grofnum" target="_blank" rel="noopener">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+    </svg>
+    mousseaun/grofnum
+  </a>
+</header>
+
+<!-- ══════════════════ PAGE BODY ══════════════════ -->
+<div class="page-body">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" aria-label="Navigation">
+    <div class="sb-label">Scripts</div>
+    <nav class="sb-nav">
+      <a href="#apply-event" class="py">
+        <span class="lang-dot"></span>apply_event.py
+      </a>
+      <a href="#neb-conf2lammps" class="py">
+        <span class="lang-dot"></span>neb_conf2lammps.py
+      </a>
+      <a href="#show-basin" class="py">
+        <span class="lang-dot"></span>show_basin_connectivity.py
+      </a>
+      <a href="#view-trajectory" class="py">
+        <span class="lang-dot"></span>view_trajectory.py
+      </a>
+      <a href="#xyz2lammps" class="py">
+        <span class="lang-dot"></span>xyz2lammps.py
+      </a>
+      <a href="#xyz-distance" class="py">
+        <span class="lang-dot"></span>xyz_distance.py
+      </a>
+      <div class="sb-divider"></div>
+      <a href="#nettoyage" class="sh">
+        <span class="lang-dot"></span>nettoyage.sh
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main>
+
+    <!-- INTRO -->
+    <section class="intro" aria-label="Introduction">
+      <p>
+        A collection of utility scripts for molecular dynamics post-processing —
+        format conversion between XYZ, LAMMPS data files, and NEB configurations;
+        structural analysis of KMC trajectories; and event application from ARTn output.
+      </p>
+      <p>
+        Most scripts depend only on the Python 3 standard library and can be run directly
+        from any working directory. Scripts requiring external packages note their
+        dependencies explicitly below.
+      </p>
+      <div class="badge-row">
+        <span class="badge">Python 3</span>
+        <span class="badge">LAMMPS</span>
+        <span class="badge">ARTn</span>
+        <span class="badge">KMC / pykmc</span>
+        <span class="badge">NEB</span>
+        <span class="badge">OVITO</span>
+      </div>
+    </section>
+
+    <!-- REQUIREMENTS -->
+    <div class="requirements">
+      <div class="req-heading">Dépendances</div>
+      <div class="req-grid">
+        <div class="req-item">
+          <span class="req-name">Python ≥ 3.6</span>
+          <span class="req-desc">Tous les scripts</span>
+        </div>
+        <div class="req-item">
+          <span class="req-name">pandas</span>
+          <span class="req-desc">show_basin_connectivity.py</span>
+        </div>
+        <div class="req-item">
+          <span class="req-name">OVITO</span>
+          <span class="req-desc">view_trajectory.py</span>
+        </div>
+        <div class="req-item">
+          <span class="req-name">PySide6</span>
+          <span class="req-desc">view_trajectory.py</span>
+        </div>
+      </div>
+      <p class="req-note">
+        Cinq des sept scripts n'ont aucune dépendance externe — la bibliothèque
+        standard Python 3 suffit (<code style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--accent)">argparse, math, re, sys, os</code>).
+      </p>
+    </div>
+
+    <!-- ══ apply_event.py ══ -->
+    <section class="script-section" id="apply-event">
+      <div class="script-header">
+        <span class="script-name">apply_event.py</span>
+        <span class="lang-tag py">Python</span>
+      </div>
+      <p class="script-desc">
+        Applies an ARTn event to a LAMMPS data file to produce saddle-point
+        and final-state configurations.
+      </p>
+      <p class="detail-p">
+        Reads three inputs — a LAMMPS initial configuration, an ARTn event file
+        identifying the cluster atoms, and a three-frame XYZ file (initial, saddle,
+        final) — computes atomic displacements, and writes two new LAMMPS data files
+        with periodic boundary conditions applied by default.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="cbh-label">Usage</span>
+          <div class="cbh-dots"><span></span><span></span><span></span></div>
+        </div>
+        <pre><span class="pn">./apply_event.py</span> <span class="pl">init.data</span> <span class="pl">event_file</span> <span class="pl">event.xyz</span> [<span class="kw">options</span>]
+
+<span class="cm"># with a custom output base name</span>
+<span class="pn">./apply_event.py</span> <span class="st">conf.data</span> <span class="st">event_001</span> <span class="st">event_001.xyz</span> <span class="kw">-o</span> run_001
+
+<span class="cm"># disable PBC, show top 20 displacements</span>
+<span class="pn">./apply_event.py</span> <span class="st">conf.data</span> <span class="st">event_001</span> <span class="st">event_001.xyz</span> <span class="kw">--no-pbc</span> <span class="kw">--top</span> <span class="st">20</span></pre>
+      </div>
+
+      <div class="args-wrap">
+        <table class="args">
+          <thead>
+            <tr>
+              <th>Argument</th>
+              <th></th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>init.data</code></td>
+              <td><span class="pill-req">required</span></td>
+              <td class="td-desc">LAMMPS initial configuration (.data)</td>
+            </tr>
+            <tr>
+              <td><code>event_file</code></td>
+              <td><span class="pill-req">required</span></td>
+              <td class="td-desc">ARTn event file — cluster atom IDs</td>
+            </tr>
+            <tr>
+              <td><code>event.xyz</code></td>
+              <td><span class="pill-req">required</span></td>
+              <td class="td-desc">XYZ file with 3 frames: initial, saddle, final</td>
+            </tr>
+            <tr>
+              <td><code>-o, --output</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Output base name (default: derived from input)</td>
+            </tr>
+            <tr>
+              <td><code>--saddle-out</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Explicit path for saddle-point output</td>
+            </tr>
+            <tr>
+              <td><code>--final-out</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Explicit path for final-state output</td>
+            </tr>
+            <tr>
+              <td><code>--no-pbc</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Disable periodic boundary condition wrapping</td>
+            </tr>
+            <tr>
+              <td><code>-v, --verbose</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Print per-atom displacements</td>
+            </tr>
+            <tr>
+              <td><code>--top N</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Print the N largest displacements (default: 10)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="detail-p" style="font-size:0.85rem; color:var(--muted); margin-top:6px;">
+        Outputs: <span class="output-chip">&lt;base&gt;_saddle.data</span>
+        <span class="output-chip">&lt;base&gt;_final.data</span>
+      </p>
+    </section>
+
+    <hr class="section-rule">
+
+    <!-- ══ neb_conf2lammps.py ══ -->
+    <section class="script-section" id="neb-conf2lammps">
+      <div class="script-header">
+        <span class="script-name">neb_conf2lammps.py</span>
+        <span class="lang-tag py">Python</span>
+      </div>
+      <p class="script-desc">
+        Converts NEB endpoint configurations to LAMMPS data format.
+      </p>
+      <p class="detail-p">
+        Merges box geometry and atom IDs from the initial NEB configuration with
+        the atomic positions from the final NEB configuration, producing a
+        LAMMPS-ready <code style="font-family:'JetBrains Mono',monospace;font-size:0.85em;color:var(--accent)">.data</code> file.
+        Verifies that both files describe the same number of atoms.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="cbh-label">Usage</span>
+          <div class="cbh-dots"><span></span><span></span><span></span></div>
+        </div>
+        <pre><span class="pn">./neb_conf2lammps.py</span> <span class="pl">neb_ini.conf</span> <span class="pl">neb_fin.conf</span>
+<span class="pn">./neb_conf2lammps.py</span> <span class="st">neb_ini.conf</span> <span class="st">neb_fin.conf</span> <span class="kw">-o</span> <span class="st">final_state.data</span></pre>
+      </div>
+
+      <div class="args-wrap">
+        <table class="args">
+          <thead>
+            <tr><th>Argument</th><th></th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ini_file</code></td>
+              <td><span class="pill-req">required</span></td>
+              <td class="td-desc">Initial NEB configuration (LAMMPS format)</td>
+            </tr>
+            <tr>
+              <td><code>fin_file</code></td>
+              <td><span class="pill-req">required</span></td>
+              <td class="td-desc">Final NEB configuration with target positions</td>
+            </tr>
+            <tr>
+              <td><code>-o, --output</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Output path (default: fin_file with <code>.data</code> extension)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <hr class="section-rule">
+
+    <!-- ══ show_basin_connectivity.py ══ -->
+    <section class="script-section" id="show-basin">
+      <div class="script-header">
+        <span class="script-name">show_basin_connectivity.py</span>
+        <span class="lang-tag py">Python</span>
+      </div>
+      <p class="script-desc">
+        Displays and filters a basin connectivity DataFrame from a pykmc pickle file.
+      </p>
+      <p class="detail-p">
+        Reads a pandas pickle containing the <code style="font-family:'JetBrains Mono',monospace;font-size:0.85em;color:var(--accent)">basin_connectivity</code> DataFrame
+        produced by pykmc simulations. Supports state-to-state filtering and
+        optional CSV export. Handles cross-version pandas compatibility automatically.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="cbh-label">Usage</span>
+          <div class="cbh-dots"><span></span><span></span><span></span></div>
+        </div>
+        <pre><span class="cm"># default file (basin_connectivity_1.pickle)</span>
+<span class="pn">python3 show_basin_connectivity.py</span>
+
+<span class="cm"># specific file + filter by state + export</span>
+<span class="pn">python3 show_basin_connectivity.py</span> <span class="st">run_42.pickle</span> \
+  <span class="kw">--state</span> <span class="st">5</span> <span class="kw">--to-state</span> <span class="st">3</span> <span class="kw">--csv</span> <span class="st">transitions_5to3.csv</span></pre>
+      </div>
+
+      <div class="args-wrap">
+        <table class="args">
+          <thead>
+            <tr><th>Argument</th><th></th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>pickle_file</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Pickle path (default: <code>basin_connectivity_1.pickle</code>)</td>
+            </tr>
+            <tr>
+              <td><code>--state N</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Filter rows where column <code>state</code> == N</td>
+            </tr>
+            <tr>
+              <td><code>--to-state N</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Filter rows where column <code>state_connexion</code> == N</td>
+            </tr>
+            <tr>
+              <td><code>--csv FILE</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Export filtered table to CSV</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="detail-p" style="font-size:0.85rem;color:var(--muted);margin-top:6px;">
+        Requires: <span class="badge" style="display:inline-flex">pandas</span>
+      </p>
+    </section>
+
+    <hr class="section-rule">
+
+    <!-- ══ view_trajectory.py ══ -->
+    <section class="script-section" id="view-trajectory">
+      <div class="script-header">
+        <span class="script-name">view_trajectory.py</span>
+        <span class="lang-tag py">Python</span>
+      </div>
+      <p class="script-desc">
+        Interactive 3-D viewer for KMC trajectories using OVITO.
+      </p>
+      <p class="detail-p">
+        Loads a multi-frame XYZ trajectory and renders it in an OVITO viewport
+        with a Qt interface. Features include frame-by-frame navigation or
+        auto-play, Common Neighbor Analysis (CNA) to identify structural defects,
+        and optional FCC-atom masking to isolate non-FCC environments.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="cbh-label">Usage</span>
+          <div class="cbh-dots"><span></span><span></span><span></span></div>
+        </div>
+        <pre><span class="cm"># default trajectory file (trajkmc.xyz in cwd)</span>
+<span class="pn">python view_trajectory.py</span>
+
+<span class="cm"># explicit trajectory path</span>
+<span class="pn">python view_trajectory.py</span> <span class="st">simulations/run_07/trajkmc.xyz</span>
+
+<span class="cm"># show built-in documentation</span>
+<span class="pn">python view_trajectory.py</span> <span class="kw">--info</span></pre>
+      </div>
+
+      <div class="args-wrap">
+        <table class="args">
+          <thead>
+            <tr><th>Argument</th><th></th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>fichier.xyz</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Trajectory file path (default: <code>trajkmc.xyz</code>)</td>
+            </tr>
+            <tr>
+              <td><code>--info</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Print documentation and exit</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="detail-p" style="font-size:0.85rem;color:var(--muted);margin-top:6px;">
+        Requires: <span class="badge" style="display:inline-flex">OVITO</span>
+        <span class="badge" style="display:inline-flex">PySide6</span>
+      </p>
+    </section>
+
+    <hr class="section-rule">
+
+    <!-- ══ xyz2lammps.py ══ -->
+    <section class="script-section" id="xyz2lammps">
+      <div class="script-header">
+        <span class="script-name">xyz2lammps.py</span>
+        <span class="lang-tag py">Python</span>
+      </div>
+      <p class="script-desc">
+        Converts extended XYZ files to LAMMPS <code style="font-family:'JetBrains Mono',monospace;font-size:0.85em">atom_style atomic</code> data files.
+      </p>
+      <p class="detail-p">
+        Parses extended XYZ headers to extract simulation box geometry
+        (including triclinic parameters), maps element symbols to LAMMPS
+        atom types with standard atomic masses, and supports multi-frame
+        trajectory files via the <code style="font-family:'JetBrains Mono',monospace;font-size:0.85em;color:var(--accent)">--frame</code> flag.
+        No external dependencies required.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="cbh-label">Usage</span>
+          <div class="cbh-dots"><span></span><span></span><span></span></div>
+        </div>
+        <pre><span class="cm"># basic conversion (output: input.data)</span>
+<span class="pn">./xyz2lammps.py</span> <span class="st">structure.xyz</span>
+
+<span class="cm"># specify output and element symbols</span>
+<span class="pn">./xyz2lammps.py</span> <span class="st">structure.xyz</span> <span class="kw">-o</span> <span class="st">al2o3.data</span> <span class="kw">--symbols</span> <span class="st">Al,O</span>
+
+<span class="cm"># pick frame 5 from a trajectory</span>
+<span class="pn">./xyz2lammps.py</span> <span class="st">traj.xyz</span> <span class="kw">--frame</span> <span class="st">5</span>
+
+<span class="cm"># list all available frames</span>
+<span class="pn">./xyz2lammps.py</span> <span class="st">traj.xyz</span> <span class="kw">--list-frames</span></pre>
+      </div>
+
+      <div class="args-wrap">
+        <table class="args">
+          <thead>
+            <tr><th>Argument</th><th></th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>input</code></td>
+              <td><span class="pill-req">required</span></td>
+              <td class="td-desc">Extended XYZ file (single structure or trajectory)</td>
+            </tr>
+            <tr>
+              <td><code>-o, --output</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Output path (default: input with <code>.data</code> extension)</td>
+            </tr>
+            <tr>
+              <td><code>--frame N</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Frame index to convert (default: 0)</td>
+            </tr>
+            <tr>
+              <td><code>--list-frames</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">List all frames in file and exit</td>
+            </tr>
+            <tr>
+              <td><code>--symbols</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Comma-separated element symbols for type mapping, e.g. <code>Si</code> or <code>Al,O</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <hr class="section-rule">
+
+    <!-- ══ xyz_distance.py ══ -->
+    <section class="script-section" id="xyz-distance">
+      <div class="script-header">
+        <span class="script-name">xyz_distance.py</span>
+        <span class="lang-tag py">Python</span>
+      </div>
+      <p class="script-desc">
+        Computes the structural distance (RMSD) between two atomic configurations.
+      </p>
+      <p class="detail-p">
+        Accepts XYZ and LAMMPS data files interchangeably (format detected from
+        extension; overridable). Atoms are matched by <code style="font-family:'JetBrains Mono',monospace;font-size:0.85em;color:var(--accent)">id</code> field when
+        available, otherwise by line order. Reports RMSD in Å, per-component RMS
+        (dx, dy, dz), maximum displacement, and energy difference when present
+        in both files.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="cbh-label">Usage</span>
+          <div class="cbh-dots"><span></span><span></span><span></span></div>
+        </div>
+        <pre><span class="cm"># compare two LAMMPS data files</span>
+<span class="pn">./xyz_distance.py</span> <span class="st">initial.data</span> <span class="st">final.data</span>
+
+<span class="cm"># compare specific frames from an XYZ trajectory</span>
+<span class="pn">./xyz_distance.py</span> <span class="st">traj.xyz</span> <span class="st">ref.xyz</span> <span class="kw">--frame-a</span> <span class="st">10</span> <span class="kw">--frame-b</span> <span class="st">0</span>
+
+<span class="cm"># verbose: show per-atom displacements, top 5</span>
+<span class="pn">./xyz_distance.py</span> <span class="st">A.data</span> <span class="st">B.data</span> <span class="kw">-v</span> <span class="kw">--top</span> <span class="st">5</span>
+
+<span class="cm"># disable PBC (isolated cluster)</span>
+<span class="pn">./xyz_distance.py</span> <span class="st">A.xyz</span> <span class="st">B.xyz</span> <span class="kw">--no-pbc</span></pre>
+      </div>
+
+      <div class="args-wrap">
+        <table class="args">
+          <thead>
+            <tr><th>Argument</th><th></th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>fichier_A</code></td>
+              <td><span class="pill-req">required</span></td>
+              <td class="td-desc">First configuration — XYZ or LAMMPS data</td>
+            </tr>
+            <tr>
+              <td><code>fichier_B</code></td>
+              <td><span class="pill-req">required</span></td>
+              <td class="td-desc">Second configuration — same or different format</td>
+            </tr>
+            <tr>
+              <td><code>--frame-a N</code> / <code>--frame-b N</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Frame index to read from each XYZ file</td>
+            </tr>
+            <tr>
+              <td><code>--format-a</code> / <code>--format-b</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Force format: <code>xyz</code> or <code>lammps</code> (overrides extension detection)</td>
+            </tr>
+            <tr>
+              <td><code>--no-pbc</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Disable periodic boundary conditions</td>
+            </tr>
+            <tr>
+              <td><code>-v, --verbose</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Print per-atom displacement vectors</td>
+            </tr>
+            <tr>
+              <td><code>--top N</code></td>
+              <td><span class="pill-opt">optional</span></td>
+              <td class="td-desc">Print the N most-displaced atoms</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="detail-p" style="font-size:0.875rem;color:var(--muted);margin-top:8px;">
+        Output: RMSD (Å) · max displacement · RMS per component · ΔE (if available)
+      </p>
+    </section>
+
+    <hr class="section-rule">
+
+    <!-- ══ nettoyage.sh ══ -->
+    <section class="script-section" id="nettoyage">
+      <div class="script-header">
+        <span class="script-name">nettoyage.sh</span>
+        <span class="lang-tag sh">Shell</span>
+      </div>
+      <p class="script-desc">
+        Removes LAMMPS and pykmc simulation output files from the working directory.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="cbh-label">Usage</span>
+          <div class="cbh-dots"><span></span><span></span><span></span></div>
+        </div>
+        <pre><span class="cm"># run from your simulation directory</span>
+<span class="pn">bash nettoyage.sh</span>
+
+<span class="cm"># or mark executable once</span>
+<span class="st">chmod +x nettoyage.sh</span>
+<span class="pn">./nettoyage.sh</span></pre>
+      </div>
+
+      <div class="warn-block">
+        <span class="warn-icon">⚠</span>
+        <span>Suppression définitive sans confirmation. Fichiers ciblés :
+        <code style="font-family:'JetBrains Mono',monospace;font-size:0.82em">artn.out*</code>
+        <code style="font-family:'JetBrains Mono',monospace;font-size:0.82em">lammps.log*</code>
+        <code style="font-family:'JetBrains Mono',monospace;font-size:0.82em">pykmc.*</code>
+        <code style="font-family:'JetBrains Mono',monospace;font-size:0.82em">trajkmc.xyz</code>
+        <code style="font-family:'JetBrains Mono',monospace;font-size:0.82em">*.pickle</code>
+        — vérifiez le répertoire courant avant l'exécution.</span>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer>
+  <span>mousseaun / grofnum</span>
+  <a href="https://github.com/mousseaun/grofnum" target="_blank" rel="noopener">GitHub</a>
+  <a href="https://github.com/mousseaun/grofnum/issues" target="_blank" rel="noopener">Issues</a>
+  <span style="margin-left:auto;font-size:0.75rem">Université de Montréal</span>
+</footer>
